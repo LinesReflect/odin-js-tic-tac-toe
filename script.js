@@ -113,6 +113,7 @@ function Game(
     let playerTurn = null;
     const board = gameBoard();
     let turn = 0;
+    let gameFinished = false
 
     const players = [
         new Player(playerOneName, "X"),
@@ -123,7 +124,7 @@ function Game(
         turn += 1
         console.log(`Turn ${turn}`);
 
-        if ((turn % 2) == 0 ) {
+        if ((turn % 2) === 0 ) {
             playerTurn = players[1]
         } else {
             playerTurn = players[0]
@@ -152,21 +153,28 @@ function Game(
         }
     }
 
-    const endGame = () => {
+    const endGame = (winningPlayer) => {
         board.displayBoard();
-        return console.log(`Congrats ${playerTurn.name}, YOU WIN!`)
+        if (winningPlayer) {
+            console.log(`Congrats ${winningPlayer.name}, YOU WIN!`)
+        } else {
+            console.log("It's a tie!")
+        }
+        return gameFinished = true;
     }
 
-    while (winner === null) {
+    while (gameFinished === false) {
         changeTurn();
         board.displayBoard();
         choosePiecePlacement();
         if (turn > 3) {
             if (board.checkBoardForWinner()) {
                 winner = playerTurn
+                endGame(winner)
+            } else if (turn === 9 && winner == null) {
                 endGame()
             }
-        }
+        } 
     }
 
 }

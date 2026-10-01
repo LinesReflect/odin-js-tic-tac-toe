@@ -112,7 +112,7 @@ function Game(
     let winner = null;
     let playerTurn = null;
     const board = gameBoard();
-    let turn = null;
+    let turn = 0;
 
     const players = [
         new Player(playerOneName, "X"),
@@ -120,17 +120,15 @@ function Game(
     ];
     
     const changeTurn = () => {
-        turn = turn === null ? 0 : turn + 1
+        turn += 1
         console.log(`Turn ${turn}`);
 
-        if (turn === 0) {
+        if ((turn % 2) == 0 ) {
+            playerTurn = players[1]
+        } else {
             playerTurn = players[0]
-            console.log(`${players[0].name}'s Move!`)
-
-            return playerTurn
         }
 
-        playerTurn = playerTurn === players[0] ? players[1] : players[0];
         console.log(`${playerTurn.name}'s Move!`)
 
         return playerTurn

@@ -1,19 +1,20 @@
 function gameBoard() {
     let board = []
-    const boardRange = Array.from({ length: 10 }, (_, index) => index + 1)
     
-    for (i = 0; i < 9; i++) {
+    for (let i = 0; i < 9; i++) {
         const newSquare = square(i)
         board.push(newSquare);
     }
 
-    const getBoard = () => board;
+    const getBoard = () => {
+        return board
+    }
+
     const displayBoard = () => {
         for (i = 0; i < 9; i += 3) {
             firstItem = i
             lastItem = firstItem + 3
             const row = board.slice(firstItem, lastItem);
-            console.log(`${row[0].getContent()} | ${row[1].getContent()} | ${row[2].getContent()}`);
         }
     }
     const placeOnBoard = (piece, selectedSquare) => {
@@ -25,7 +26,11 @@ function gameBoard() {
     }
     const checkBoardForWinner = () => {
         const isConsecutiveThree = (combo) => {
-            return combo.every((square) => square.getContent() === combo[0].getContent())
+            if (combo.some(square => square.getContent() === null)) {
+                return false
+            } else {
+                return combo.every((square) => square.getContent() === combo[0].getContent())
+            }
         }
         const inARow = () => {
             for (i = 0; i < 9; i += 3) {
@@ -70,7 +75,11 @@ function gameBoard() {
         }
         return  null
     }
-    const resetBoard = () => board = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+    const deleteBoard = () => {
+        while (target.hasChildNodes()) {
+            target.removeChild(target.firstChild);
+        }
+    };
 
     return {
         getBoard,
@@ -78,22 +87,30 @@ function gameBoard() {
         emptyBoardSquares,
         placeOnBoard,
         checkBoardForWinner,
-        resetBoard
+        deleteBoard
     };
 }
 
 function square(position) {
     let boardPosition = position
-    let content = boardPosition + 1;
+    let content = null;
     
     const getContent = () => content;
     const changeContent = (newContent) => {
         content = newContent
     }
+    const isEmpty = () => {
+        if (content === null) {
+            return true
+        }
+
+        return false
+    }
 
     return {
         getContent,
-        changeContent
+        changeContent,
+        isEmpty
     }
 }
 
@@ -110,7 +127,7 @@ function Game(
 ) {
 
     let winner = null;
-    let playerTurn = null;
+    let playerTurn = null
     const board = gameBoard();
     let turn = 0;
     let gameFinished = false
@@ -119,10 +136,13 @@ function Game(
         new Player(playerOneName, "X"),
         new Player(playerTwoName, "O")
     ];
+
+    const turnIndicator = document.createElement("p");
+    turnIndicator.classList.add("turn-indicator");
+
     
     const changeTurn = () => {
         turn += 1
-        console.log(`Turn ${turn}`);
 
         if ((turn % 2) === 0 ) {
             playerTurn = players[1]
@@ -130,31 +150,33 @@ function Game(
             playerTurn = players[0]
         }
 
-        console.log(`${playerTurn.name}'s Move!`)
-
         return playerTurn
     }
 
-    const choosePiecePlacement = (error) => {
-        let emptySquares = board.emptyBoardSquares().map((square) => square.getContent())
-        let selectedSquare = null
-
-        if (error) {
-            selectedSquare = prompt(`That's not a valid entry, please choose again ${playerTurn.name}! (${emptySquares})`);
-        } else {
-            selectedSquare = prompt(`${playerTurn.name}, please choose an empty space to place your piece! (${emptySquares})`);
+    const playTurn = (square) => {
+        if (square) {
+            placePiece(square)
         }
-
-        if (emptySquares.find((emptySquare) => emptySquare == selectedSquare) !== undefined) {
-            console.log(emptySquares.find((emptySquare) => emptySquare == selectedSquare))
-            board.placeOnBoard(playerTurn.piece, selectedSquare)
+        
+        if (turn > 3) {
+            if (board.checkBoardForWinner()) {
+                winner = playerTurn
+                return endGame(winner)
+            } else if (turn === 9 && winner == null) {
+                return endGame()
+            } else {
+                changeTurn()
+            }
         } else {
-            choosePiecePlacement("error")
+            changeTurn()
         }
     }
 
+    const placePiece = (square) => {
+        square.changeContent(playerTurn.piece);
+    }
+
     const endGame = (winningPlayer) => {
-        board.displayBoard();
         if (winningPlayer) {
             console.log(`Congrats ${winningPlayer.name}, YOU WIN!`)
         } else {
@@ -163,20 +185,123 @@ function Game(
         return gameFinished = true;
     }
 
-    while (gameFinished === false) {
-        changeTurn();
-        board.displayBoard();
-        choosePiecePlacement();
-        if (turn > 3) {
-            if (board.checkBoardForWinner()) {
-                winner = playerTurn
-                endGame(winner)
-            } else if (turn === 9 && winner == null) {
-                endGame()
-            }
-        } 
+    const getWinner = () => winner;
+
+    const getBoard = () => {
+        return board.getBoard()
+    }
+
+    const getTurn = () => {
+        return turn
+    }
+
+    const getPlayerTurn = () => {
+        return playerTurn
+    }
+
+    return {
+        getBoard,
+        getTurn,
+        getPlayerTurn,
+        playTurn
     }
 
 }
 
-const game = Game();
+function ScreenController() {
+    const game = Game()
+    const board = game.getBoard()
+    const gameUI = createGameUI()
+
+    function createGameUI() {
+        const main = document.querySelector("main");
+        const startScreen = document.querySelector(".start-screen");
+        const playBtn = createElement("button", "play-button");
+        playBtn.addEventListener("click", () => {
+            main.replaceChildren(gameContainer);
+            game.playTurn()
+            updateScreen()
+        })
+        playBtn.textContent = "PLAY"
+        startScreen.append(playBtn)
+        
+        const gameContainer = createElement("section", "game-container");
+
+        const gameInfo = createElement("div", "game-info");
+        const gameBoardContainer = createElement("div", "game-board-container");
+        
+        gameContainer.append(gameInfo, gameBoardContainer);
+
+        return {
+            main,
+            gameContainer,
+            gameInfo,
+            gameBoardContainer
+        }
+
+    }
+
+
+    const updateScreen = () => {
+        player = game.getPlayerTurn()
+
+        gameUI.gameBoardContainer.replaceChildren()
+
+        updateText(player)
+
+        const boardEl = updateBoardDisplay()
+        gameUI.gameBoardContainer.appendChild(boardEl)
+    }
+
+    const updateBoardDisplay = () => {
+        const boardEl = document.createElement("div");
+        boardEl.classList.add("game-board");
+
+        updateSquaresDisplay(boardEl);
+
+        return boardEl
+    }
+
+    const updateSquaresDisplay = (boardEl) => {
+        for (let i = 0; i < board.length; i++) {
+            const squareEl = document.createElement("div");
+            squareEl.classList.add("square")
+            if (board[i].isEmpty()) {
+                squareEl.classList.add("empty")
+                squareEl.addEventListener("click", () => {
+                    playTurn(board[i]);
+                })
+            } else {
+                squareEl.classList.add("occupied")
+                squareEl.textContent = board[i].getContent()
+            }
+            boardEl.appendChild(squareEl)
+        }
+    }
+
+    const updateText = (player) => {
+        gameUI.gameInfo.replaceChildren();
+
+        const turnCount = document.createElement("p");
+        turnCount.textContent = `Turn #${game.getTurn()}`
+
+        const playerIndicator = document.createElement("p");
+        playerIndicator.textContent = `${player.name}'s turn! (${player.piece}'s)`
+
+        gameUI.gameInfo.append(turnCount, playerIndicator);
+    }
+
+    const playTurn = (square) => {
+        game.playTurn(square)
+        updateScreen()
+    }
+
+    function createElement (type, elementClass) {
+        element = document.createElement(`${type}`)
+        element.classList.add(`${elementClass}`)
+        return element
+    }
+
+}
+
+const newGame = ScreenController()

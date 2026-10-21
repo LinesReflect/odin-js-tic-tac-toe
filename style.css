@@ -4,7 +4,7 @@
 */
 
 html, body, div, span, applet, object, iframe,
-h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+blockquote, pre,
 a, abbr, acronym, address, big, cite, code,
 del, dfn, em, img, ins, kbd, q, s, samp,
 small, strike, strong, sub, sup, tt, var,
@@ -45,4 +45,82 @@ q:before, q:after {
 table {
 	border-collapse: collapse;
 	border-spacing: 0;
+}
+
+/* -------------------------------- */
+
+body {
+    background-color: hsl(225, 11%, 15%);
+    color: hsl(228, 25%, 92%);
+    width: 100vw;
+    height: 100vh;
+}
+
+header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    border-bottom: 5px solid gray;
+    width: 100%;
+}
+
+main {
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    height: 75%;
+    gap: 2.5rem;
+}
+
+.start-screen {
+}
+
+.game-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+.game-info {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    width: 50%;
+}
+
+.game-board-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+.game-board {
+    display: grid;
+    gap: 0;
+    grid-template-columns: auto auto auto;
+    justify-items: center;
+
+}
+
+.square {
+    min-width: 8rem;
+    min-height: 8rem;
+    border: 1px solid white
+}
+
+.square.empty:hover,
+.square.empty:focus {
+    cursor: pointer;
+    background-color: hsl(34, 78%, 91%, 0.5);
+}
+
+.square.empty:active {
+    cursor: pointer;
+    background-color: hsla(0, 0%, 100%, 0.75);
 }

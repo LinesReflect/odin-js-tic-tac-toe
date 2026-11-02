@@ -176,61 +176,57 @@ function Game(
         square.changeContent(playerTurn.piece);
     }
 
-    const endGame = (winningPlayer) => {
-        if (winningPlayer) {
-            console.log(`Congrats ${winningPlayer.name}, YOU WIN!`)
-        } else {
-            console.log("It's a tie!")
-        }
+    const endGame = () => {
         return gameFinished = true;
     }
 
+    const getGameFinished = () => gameFinished; 
+
     const getWinner = () => winner;
 
-    const getBoard = () => {
-        return board.getBoard()
-    }
+    const getBoard = () => board.getBoard();
 
-    const getTurn = () => {
-        return turn
-    }
+    const getTurn = () => turn;
 
-    const getPlayerTurn = () => {
-        return playerTurn
-    }
+    const getPlayerTurn = () => playerTurn;
 
     return {
         getBoard,
         getTurn,
         getPlayerTurn,
-        playTurn
+        playTurn,
+        getGameFinished,
+        getWinner
     }
 
 }
 
 function ScreenController() {
-    const game = Game()
-    const board = game.getBoard()
-    const gameUI = createGameUI()
-
-    function createGameUI() {
-        const main = document.querySelector("main");
-        const startScreen = document.querySelector(".start-screen");
-        const playBtn = createElement("button", "play-button");
-        playBtn.addEventListener("click", () => {
-            main.replaceChildren(gameContainer);
-            game.playTurn()
-            updateScreen()
-        })
-        playBtn.textContent = "PLAY"
-        startScreen.append(playBtn)
+    startGame()
+    
+    function startGame() {
+        const game = Game()
+        const board = game.getBoard()
+        const gameUI = UI()
         
+
+        game.playTurn()
+        updateScreen(game, board, gameUI)
+
+        return game
+    }
+
+    function UI() {
+        const main = document.querySelector("main");
+        main.replaceChildren();
+
         const gameContainer = createElement("section", "game-container");
 
         const gameInfo = createElement("div", "game-info");
         const gameBoardContainer = createElement("div", "game-board-container");
         
         gameContainer.append(gameInfo, gameBoardContainer);
+        main.append(gameContainer);
 
         return {
             main,
@@ -242,34 +238,47 @@ function ScreenController() {
     }
 
 
-    const updateScreen = () => {
-        player = game.getPlayerTurn()
+    function updateScreen(game, board, gameUI) {
+        const player = game.getPlayerTurn()
 
         gameUI.gameBoardContainer.replaceChildren()
 
-        updateText(player)
+        updateText(game, player, gameUI)
 
-        const boardEl = updateBoardDisplay()
+        const boardEl = updateBoardDisplay(game, board, gameUI)
         gameUI.gameBoardContainer.appendChild(boardEl)
+
+        if (game.getGameFinished()) {
+            createPlayAgainBtn(gameUI)
+        }
     }
 
-    const updateBoardDisplay = () => {
+    function createPlayAgainBtn(gameUI) {
+        const playAgainBtn = createElement("button", "play-button");
+        playAgainBtn.addEventListener("click", () => {
+            startGame()
+        });
+        playAgainBtn.textContent = "Play Again";
+        gameUI.main.appendChild(playAgainBtn);
+    }
+
+    function updateBoardDisplay(game, board, gameUI) {
         const boardEl = document.createElement("div");
         boardEl.classList.add("game-board");
 
-        updateSquaresDisplay(boardEl);
+        updateSquaresDisplay(game, board, boardEl, gameUI);
 
         return boardEl
     }
 
-    const updateSquaresDisplay = (boardEl) => {
+    function updateSquaresDisplay(game, board, boardEl, gameUI) {
         for (let i = 0; i < board.length; i++) {
             const squareEl = document.createElement("div");
             squareEl.classList.add("square")
-            if (board[i].isEmpty()) {
+            if (board[i].isEmpty() && !game.getGameFinished()) {
                 squareEl.classList.add("empty")
                 squareEl.addEventListener("click", () => {
-                    playTurn(board[i]);
+                    playTurn(game, board, board[i], gameUI);
                 })
             } else {
                 squareEl.classList.add("occupied")
@@ -279,29 +288,60 @@ function ScreenController() {
         }
     }
 
-    const updateText = (player) => {
-        gameUI.gameInfo.replaceChildren();
+    function updateText(game, player, gameUI) {
 
-        const turnCount = document.createElement("p");
-        turnCount.textContent = `Turn #${game.getTurn()}`
+        const finishedGame = () => {
+            const playerIndicator = document.querySelector(".player-indicator");
+            
+            if (game.getWinner()) {
+                playerIndicator.textContent = `${game.getWinner().name} WON!`
+            } else {
+                playerIndicator.textContent = "IT'S A TIE!"
+            }
+        }
 
-        const playerIndicator = document.createElement("p");
-        playerIndicator.textContent = `${player.name}'s turn! (${player.piece}'s)`
+        const ongoingGame = () => {
+            gameUI.gameInfo.replaceChildren();
 
-        gameUI.gameInfo.append(turnCount, playerIndicator);
+            const turnCount = document.createElement("p");
+            turnCount.classList.add("turnCount");
+            turnCount.textContent = `Turn #${game.getTurn()}`
+
+            const playerIndicator = document.createElement("p");
+            playerIndicator.classList.add("player-indicator");
+            playerIndicator.textContent = `${player.name}'s turn! (${player.piece}'s)`
+
+            gameUI.gameInfo.append(turnCount, playerIndicator);
+        }
+
+        if (game.getGameFinished()) {
+            return finishedGame();
+        } else {
+            return ongoingGame();
+        }
+        
     }
 
-    const playTurn = (square) => {
+    function playTurn(game, board, square, gameUI) {
         game.playTurn(square)
-        updateScreen()
+        updateScreen(game, board, gameUI)
     }
-
-    function createElement (type, elementClass) {
-        element = document.createElement(`${type}`)
-        element.classList.add(`${elementClass}`)
-        return element
-    }
-
 }
 
-const newGame = ScreenController()
+function gameInitializer() {
+    const main = document.querySelector("main");
+    const startScreen = createElement("div", "start-screen");
+    main.append(startScreen)
+    const playBtn = createElement("button", "play-button");
+    playBtn.addEventListener("click", ScreenController);
+    playBtn.textContent = "PLAY"
+    startScreen.append(playBtn)
+}
+
+function createElement (type, elementClass) {
+    element = document.createElement(`${type}`)
+    element.classList.add(`${elementClass}`)
+    return element
+}
+
+const newGame = gameInitializer()
